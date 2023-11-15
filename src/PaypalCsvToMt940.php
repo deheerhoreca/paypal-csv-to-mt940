@@ -24,7 +24,7 @@ class PaypalCsvToMt940
 
     public function __construct($csv, $language = 'NL', $options = [])
     {
-	    $this->setOptions($options);
+        $this->setOptions($options);
         $this->loadFile($csv);
     }
 
@@ -44,12 +44,28 @@ class PaypalCsvToMt940
             throw new \Exception("Can't open file. Check permissions.");
 
         $this->csv_file_location = $csv;
-
-        // Add a trimming newline... Don't know why. TODO
-        file_put_contents($this->csv_file_location, "\n" .  trim(file_get_contents($this->csv_file_location)));
-        $csv_array = array_map('str_getcsv', file($this->csv_file_location));
-
-        array_shift($csv_array);
+        
+        // DHH CORE HACK
+        // Remove the UTF-8 BOM flag in order to avoid wrong processing of
+        // data. It seems, that str_getcsv is not able to UTF-8 BOM.
+        $bom = pack('H*','EFBBBF');
+        $text = preg_replace("/^$bom/", '', file_get_contents($this->csv_file_location));
+        $csv_array = array_map(
+            'str_getcsv', 
+            explode("\n", $text)
+        );
+        
+        // PayPal CSVs start with an empty line
+        if($csv_array[0] === [0 => NULL]) {
+          unset($csv_array[0]);
+          $csv_array = array_values($csv_array);
+        }
+        
+        // Remove empty elements
+        $csv_array = array_filter($csv_array, function($v, $k) {
+            return $v !== [0 => null];
+        }, ARRAY_FILTER_USE_BOTH);
+        
         array_walk($csv_array, function(&$a) use ($csv_array) {
             $a = array_combine($csv_array[0], $a);
         });
@@ -80,7 +96,7 @@ class PaypalCsvToMt940
             $mutation->date = (\DateTime::createFromFormat("d-m-Y H:i:s e", $m[$f['date']] . ' ' . $m[$f['time']] . ' ' . $m[$f['timezone']]))->format('Y-m-d H:i:s e');
             $mutation->description = $m[$f['item_title']] . ' ' . $m[$f['name']] . ' ' . $m[$f['type']] .  ' ' . $m[$f['transaction_reference']] . ' ' . $m[$f['object_reference']] . ' ' . $m[$f['invoice_number']] . ' ' . $m[$f['subject']];
             $mutation->setBalance($m[$f['balance']]);
-
+// var_dump($mutation);
             $this->mutations[] = $mutation;
         }
     }
@@ -92,7 +108,7 @@ class PaypalCsvToMt940
             if(!is_string($options['filename']))
                 throw new \Exception("Filename needs to be a string.");
             
-            $fn = explode(DIRECTORY_SEPERATOR, $options['filename']);
+            $fn = explode(DIRECTORY_SEPARATOR, $options['filename']);
             $this->options['filename'] = array_pop($fn);
         }
 
@@ -115,7 +131,7 @@ class PaypalCsvToMt940
         }
         if(isset($options['language']))
         {
-            $this->options['language'] = substr(strtolower($options['location']), 0, 2);
+            $this->options['language'] = substr(strtolower($options['language']), 0, 2);
         }
     }
 

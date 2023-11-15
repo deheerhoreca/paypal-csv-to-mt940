@@ -10,7 +10,8 @@ return [
         'status'            => 'Status',
         'currency'          => 'Valuta',
         'gross'             => 'Bruto',
-        'fee'               => 'Fee',
+        // 'fee'               => 'Fee',
+        'fee'               => 'Kosten',        // DHH CORE HACK
         'net'               => 'Net',
         'from_mail'         => 'Van e-mailadres',
         'to_mail'           => 'Naar e-mailadres',
@@ -21,7 +22,8 @@ return [
         'object_reference'  => 'Objectreferentie',
         'shipping_costs'    => 'Verzendkosten',
         'insurance_amount'  => 'Verzekeringsbedrag',
-        'sales_tax'         => 'Salex Tax',
+        // 'sales_tax'         => 'Salex Tax',
+        'sales_tax'         => 'BTW',           // DHH CORE HACK
         'name_option_1'     => 'Naam optie 1',
         'name_value_1'      => 'Waarde optie 1',
         'name_option_2'     => 'Naam optie 2',

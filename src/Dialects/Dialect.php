@@ -12,14 +12,16 @@ abstract class Dialect implements DialectInterface
     public $balance = 0;
     public $mutations = [];
     public $currency = 'EUR';
+    public $lastDate = null;    // DHH CORE HACK
 
+    // DHH CORE HACK
     public $template = <<<EOF
 :20:{{reference}}
 :25:{{iban}}
-:28:{{index}}/1
+:28C:{{index}}/1
 :60F:{{startBalance}}
 {{mutations}}
-:62F:{{balance}}
+:62F:C{{lastDate}}{{balance}}
 EOF;
 
     public function __construct($iban, $reference, $startBalance = 0, $startDate = null, $index = 0)
@@ -136,11 +138,15 @@ EOF;
      * 
      * @return string The amount 
      */
-    private function makeAmount($amount, $currency = '')
+    private function makeAmount($amount, $currency = '', $abs = false)  // DHH CORE HACK
     {
         $currency   = \strtoupper($currency);
         $amount     = (float) str_replace(',', '.', $amount);
-        return $currency . \number_format($amount, 2, '.', '');
+        // return $currency . \number_format($amount, 2, '.', '');      // DHH CORE HACK
+        if($abs === true) {                                             // DHH CORE HACK
+          $amount = abs($amount);                                       // DHH CORE HACK
+        }                                                               // DHH CORE HACK
+        return $currency . \number_format($amount, 2, ',', '');         // DHH CORE HACK
     }
 
     /**
@@ -156,11 +162,13 @@ EOF;
         $add        = (bool)($amount > 0);
         
         $mutation           = [];
-        $mutation["_61"]    = date('ymd', $time) . date('md', $time) . ($add ? 'C' : 'D') . abs($this->makeAmount($amount)) . "N526NOREF";
+        $mutation["_61"]    = date('ymd', $time) . date('md', $time) . ($add ? 'C' : 'D') . $this->makeAmount($amount, '', true) . "N526NOREF"; // DHH CORE HACK
         $mutation["_86"]    = substr($description, 0, 386);
+        
+        $this->lastDate     = date('ymd', $time);     // DHH CORE HACK
 
         $this->mutations[]  = $mutation;
-        $this->balance      = $balance;
+        $this->balance      = $this->makeAmount($balance, $this->currency); // DHH CORE HACK
 
         return $this;
     }
