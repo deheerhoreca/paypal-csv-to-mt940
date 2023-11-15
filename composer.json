@@ -1,5 +1,5 @@
 {
-    "name": "deargonaut/paypal-csv-to-mt940",
+    "name": "deheerhoreca/paypal-csv-to-mt940",
     "description": "Parse PayPal CSV exports to the MT940 format. Convenient for a lot of accountancy software.",
     "type": "library",
     "license": "MIT",
